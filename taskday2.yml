@@ -1,0 +1,52 @@
+---
+- name: create site
+  hosts: "{{myhost}}"
+  become: true
+  tasks:
+    - name: Print memory
+      debug:
+       msg: >
+         The host {{ ansible_facts['hostname'] }} has total memory of {{ ansible_facts['memtotal_mb'] }}
+    - name: install package
+      yum:
+        name: "{{item}}"
+        state: installed
+      loop:
+        - httpd
+        - php
+        - php-common
+        - php-pecl-apcu
+        - php-cli
+        - php-mysqlnd
+      
+      when: ansible_facts['memtotal_mb'] >1024
+    
+    - name: create site
+      set_fact:
+       sites:
+       - name: ahmed.com
+         dir: /var/www/html/ahmed.com
+         username: ahmed
+       - name: mohamed.com
+         dir: /var/www/html/mohamed.com
+         username: mohamed
+    - name: create users
+      user:
+        name: "{{item['username']}}"
+      loop: "{{sites}}"
+    - name: create dir
+      file:
+        path: "{{item['dir']}}"
+        owner: "{{item['username']}}"
+        group: apache
+        mode: 0750
+        state: directory
+      loop: "{{ sites}}"
+      when: sites is defined
+   
+
+
+        
+
+
+
